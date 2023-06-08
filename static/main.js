@@ -175,8 +175,6 @@ function sortByVoice(xs) {
     return sortByTarget(xs, ['a', 'e', 'm', 'p'], (x) => x[5], true, false, "voice");
 }
 function sortByMood(xs) {
-    let active = [];
-    let midpass = [];
     let indicative = [];
     let subjunctive = [];
     let imperative = [];
@@ -215,12 +213,51 @@ function flattenVerbs(xs) {
     }
     return output;
 }
+function display_infinitives(xs) {
+    console.log("Infinitives");
+    console.log(xs);
+    let voices = sortByVoice(flattenVerbs(xs));
+    let header = document.createElement('h1');
+    header.textContent = "Infinitive";
+    let counter = 0;
+    let voiceNames = ['Active', 'Medio-passive', 'Middle', 'Passive'];
+    data_display.appendChild(header);
+    let tab = document.createElement('table');
+    let headerRow = document.createElement('tr');
+    headerRow.appendChild(document.createElement('th'));
+    for (let h of ['Present', 'Imperfective', 'Aorist', "Future", 'Perfect', 'Pluperfect']) {
+        let th = document.createElement('th');
+        th.textContent = h;
+        headerRow.appendChild(th);
+    }
+    tab.appendChild(headerRow);
+    for (let voice of voices) {
+        console.log(voice);
+        let row = document.createElement('tr');
+        let rowTitle = document.createElement('td');
+        rowTitle.textContent = voiceNames[counter];
+        row.appendChild(rowTitle);
+        counter += 1;
+        for (let tense of sortByTense(voice)) {
+            let cell = document.createElement('td');
+            for (let form of tense) {
+                let sp = document.createElement('span');
+                sp.classList.add('form');
+                sp.textContent = form[0];
+                cell.appendChild(sp);
+            }
+            row.appendChild(cell);
+        }
+        tab.appendChild(row);
+    }
+    data_display.appendChild(tab);
+}
 function verby(xs) {
     let counter = 0;
     let moodNames = ['Indicative', 'Subjunctive', "Optative", 'Imperative', 'Infinitive'];
     let numberNames = ['1sg', '2sg', '3sg', '2d', '3d', '1pl', '2pl', '3pl'];
     let tenseNames = ['Present', 'Imperfective', 'Aorist', "Future", 'Perfect', 'Pluperfect'];
-    let voiceNames = ['active', 'Medio-passive', 'Middle', 'Passive'];
+    let voiceNames = ['Active', 'Medio-passive', 'Middle', 'Passive'];
     let moods = sortByMood(flattenVerbs(xs));
     for (let mood of moods) {
         let header = document.createElement('h1');
@@ -283,12 +320,14 @@ function sortWord(xs) {
     let verbs = [];
     let parts = [];
     let adjectives = [];
+    let infs = [];
     let other = [];
     xs.forEach(function (w) {
         let form = w[0];
         let ns = [];
         let adj = [];
         let vs = [];
+        let infinitives = [];
         let ps = [];
         let oth = [];
         w[1].forEach((z) => {
@@ -303,7 +342,12 @@ function sortWord(xs) {
                 case "a":
                     adj.push(z);
                 case "v":
-                    vs.push(z);
+                    if (z[4] == "n") {
+                        infinitives.push(z);
+                    }
+                    else {
+                        vs.push(z);
+                    }
                     break;
                 default:
                     oth.push(z);
@@ -318,6 +362,9 @@ function sortWord(xs) {
         if (oth.length > 0) {
             other.push([form, oth]);
         }
+        if (infinitives.length > 0) {
+            infs.push([form, infinitives]);
+        }
         if (ps.length > 0) {
             parts.push([form, ps]);
         }
@@ -325,7 +372,7 @@ function sortWord(xs) {
             adjectives.push([form, adj]);
         }
     });
-    return [nouns, adjectives, verbs, parts, other];
+    return [nouns, adjectives, verbs, parts, other, infs];
 }
 function searchData() {
     let lemma = search_box.value.normalize("NFC");
@@ -338,7 +385,7 @@ function searchData() {
     else {
         let words = data[lemma];
         //TODO sort by verby things and nouny things an dother things 
-        let [nouns, adjs, verbs, parts, other] = sortWord(Object.entries(words));
+        let [nouns, adjs, verbs, parts, other, inf] = sortWord(Object.entries(words));
         if (nouns.length > 0) {
             nouny(Object.entries(nouns));
         }
@@ -354,6 +401,9 @@ function searchData() {
         }
         if (verbs.length > 0) {
             verby(verbs);
+        }
+        if (inf.length > 0) {
+            display_infinitives(inf);
         }
     }
 }
